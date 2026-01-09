@@ -10,7 +10,6 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
   private var participantsSink: FlutterEventSink?
   private var sessionStateSink: FlutterEventSink?
   private var eligibilitySink: FlutterEventSink?
-  private var eligibilityTask: Task<Void, Never>?
   private var groupStateObserver: Any?
   
   var session: GroupSession<SharePlayActivity>?
@@ -81,8 +80,6 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
 
     if arguments as? String == "eligibilityStream" {
       eligibilitySink = nil
-      eligibilityTask?.cancel()
-      eligibilityTask = nil
     }
     
     return nil
