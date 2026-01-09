@@ -11,6 +11,7 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
   private var sessionStateSink: FlutterEventSink?
   private var eligibilitySink: FlutterEventSink?
   private var eligibilityTask: Task<Void, Never>?
+  private var groupStateObserver: Any?
   
   var session: GroupSession<SharePlayActivity>?
   var messenger: GroupSessionMessenger?
@@ -53,7 +54,9 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
 
     if arguments as? String == "eligibilityStream" {
       eligibilitySink = events
-      observeEligibility()
+      if #available(iOS 15.4, *) {
+        observeEligibility()
+      }
     }
     
     return nil
@@ -191,14 +194,15 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
     }
   }
 
-  @available(iOS 15, *)
+  @available(iOS 15.4, *)
   func observeEligibility() {
-    eligibilityTask?.cancel()
-    eligibilityTask = Task { [weak self] in
-      for await isEligible in GroupStateObserver().isEligibleForGroupSession {
+    let observer = GroupStateObserver()
+    self.groupStateObserver = observer
+    observer.$isEligibleForGroupSession
+      .sink { [weak self] isEligible in
         self?.eligibilitySink?(isEligible)
       }
-    }
+      .store(in: &subscriptions)
   }
   
   func configureGroupSession(_ session: GroupSession<SharePlayActivity>) {
