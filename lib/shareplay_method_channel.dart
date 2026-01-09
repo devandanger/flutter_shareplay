@@ -28,6 +28,10 @@ class MethodChannelShareplay extends ShareplayPlatform {
   final EventChannel sessionStateChannel =
       const EventChannel('shareplay/session_state');
 
+  @visibleForTesting
+  final EventChannel eligibilityChannel =
+      const EventChannel('shareplay/eligibility');
+
   @override
   Future<bool> start({required String title}) async {
     final result = await methodChannel.invokeMethod<bool>('start', {
@@ -85,6 +89,13 @@ class MethodChannelShareplay extends ShareplayPlatform {
     return sessionStateChannel.receiveBroadcastStream('sessionStateStream').map(
           (value) => SPSessionState.values.byName(value ?? 'invalidated'),
         );
+  }
+
+  @override
+  Stream<bool> eligibilityStream() {
+    return eligibilityChannel
+        .receiveBroadcastStream('eligibilityStream')
+        .map((value) => value == true);
   }
 
   @override

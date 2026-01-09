@@ -9,6 +9,8 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
   private var newSessionSink: FlutterEventSink?
   private var participantsSink: FlutterEventSink?
   private var sessionStateSink: FlutterEventSink?
+  private var eligibilitySink: FlutterEventSink?
+  private var eligibilityTask: Task<Void, Never>?
   
   var session: GroupSession<SharePlayActivity>?
   var messenger: GroupSessionMessenger?
@@ -20,6 +22,7 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
     let newSessionChannel = FlutterEventChannel(name: "shareplay/new_session", binaryMessenger: registrar.messenger())
     let sessionStateChannel = FlutterEventChannel(name: "shareplay/session_state", binaryMessenger: registrar.messenger())
     let participantsChannel = FlutterEventChannel(name: "shareplay/participants", binaryMessenger: registrar.messenger())
+    let eligibilityChannel = FlutterEventChannel(name: "shareplay/eligibility", binaryMessenger: registrar.messenger())
     
     let instance = ShareplayPlugin()
     
@@ -27,6 +30,7 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
     newSessionChannel.setStreamHandler(instance)
     sessionStateChannel.setStreamHandler(instance)
     participantsChannel.setStreamHandler(instance)
+    eligibilityChannel.setStreamHandler(instance)
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
   
@@ -45,6 +49,11 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
     
     if arguments as? String == "sessionStateStream" {
       sessionStateSink = events
+    }
+
+    if arguments as? String == "eligibilityStream" {
+      eligibilitySink = events
+      observeEligibility()
     }
     
     return nil
@@ -65,6 +74,12 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
     
     if arguments as? String == "sessionStateStream" {
       sessionStateSink = nil
+    }
+
+    if arguments as? String == "eligibilityStream" {
+      eligibilitySink = nil
+      eligibilityTask?.cancel()
+      eligibilityTask = nil
     }
     
     return nil
@@ -173,6 +188,16 @@ public class ShareplayPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
       self.sessionStateSink?.self("joined")
     default:
       self.sessionStateSink?.self("invalidated")
+    }
+  }
+
+  @available(iOS 15, *)
+  func observeEligibility() {
+    eligibilityTask?.cancel()
+    eligibilityTask = Task { [weak self] in
+      for await isEligible in GroupStateObserver().isEligibleForGroupSession {
+        self?.eligibilitySink?(isEligible)
+      }
     }
   }
   

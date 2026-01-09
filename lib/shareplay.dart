@@ -81,4 +81,9 @@ class SharePlay {
   Stream<SPSessionState> sessionStateStream() {
     return ShareplayPlatform.instance.sessionStateStream();
   }
+
+  /// A stream indicating if the device is eligible to start a group session.
+  Stream<bool> eligibilityStream() {
+    return ShareplayPlatform.instance.eligibilityStream();
+  }
 }

@@ -55,6 +55,10 @@ abstract class ShareplayPlatform extends PlatformInterface {
     throw UnimplementedError('sessionStateStream() has not been implemented.');
   }
 
+  Stream<bool> eligibilityStream() {
+    throw UnimplementedError('eligibilityStream() has not been implemented.');
+  }
+
   Future<SPSession?> currentSession() {
     throw UnimplementedError('currentSession() has not been implemented.');
   }
